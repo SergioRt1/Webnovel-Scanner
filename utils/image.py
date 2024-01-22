@@ -12,7 +12,9 @@ def get_image_name(url):
 def get_path_and_name(url, image_name=None, extension='.jpg') -> tuple[str, str]:
     if not image_name:
         image_name = get_image_name(url)
+    invalid_chars = '<>:"/\\|?*'
     image_name = image_name.replace(' ', '_').lower()
+    image_name = image_name.translate({ord(char): None for char in invalid_chars})
     if extension:
         image_name = image_name.split('.')[0]
         image_name += extension
@@ -27,7 +29,9 @@ def download_with_screenshot(driver: webdriver.Chrome, novel_title: str, img_src
     # Open image in a new tab
     driver.execute_script(f'window.open("{img_src}", "_blank");')
     driver.switch_to.window(driver.window_handles[-1])
-    driver.find_element(By.CSS_SELECTOR, 'body > img').screenshot(image_path)
+    ok = driver.find_element(By.CSS_SELECTOR, 'body > img').screenshot(image_path)
+    if not ok:
+        print('Error downloading', img_src, image_path)
     driver.close()
     driver.switch_to.window(main_window)
 

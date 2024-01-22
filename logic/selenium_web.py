@@ -23,6 +23,28 @@ def get_driver(use_undetected: bool) -> webdriver.Chrome:
         return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
 
 
+def _fix_duplicates(chapter_list: [Chapter]) -> [Chapter]:
+    titles = set()
+    duplicated_titles = {}
+
+    for chapter in chapter_list:
+        if chapter.title in titles:
+            if chapter.title in duplicated_titles:
+                duplicated_titles[chapter.title].append(chapter)
+            else:
+                duplicated_titles[chapter.title] = [chapter]
+        else:
+            titles.add(chapter.title)
+
+    for title in duplicated_titles:
+        count = 1
+        for chapter in duplicated_titles[title]:
+            chapter.title += f' ({count})'
+            count += 1
+
+    return chapter_list
+
+
 class ScrapperSelenium:
     def __init__(self, db: SimpleFileDB, driver: webdriver.Chrome = None, websites: dict[Website, BasicWebsite] = None,
                  use_undetected_driver: bool = False):
@@ -66,6 +88,8 @@ class ScrapperSelenium:
         self.scroll_to_end()
 
         chapter_list = website.get_chapter_list()
+
+        chapter_list = _fix_duplicates(chapter_list)
 
         return chapter_list
 

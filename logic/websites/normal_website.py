@@ -40,7 +40,7 @@ class NormalWebsite(BasicWebsite):
         return selenium.get_element(
             self.driver,
             By.CSS_SELECTOR,
-            self.selectors['get_table_content_element'],
+            self.selectors['get_table_content_clickable_element'],
         )
 
     def get_chapter_list(self) -> [Chapter]:
@@ -60,4 +60,4 @@ class NormalWebsite(BasicWebsite):
             self.selectors['get_chapter_content'],
         )
 
-        return '\n'.join(p.text for p in chapter_content.find_elements(By.TAG_NAME, 'p'))
+        return '\n'.join(p.text for p in chapter_content.find_elements(By.TAG_NAME, 'p')).strip()

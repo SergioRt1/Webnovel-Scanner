@@ -13,8 +13,9 @@ def get_website_ids() -> list[str]:
 
 
 class Website(Enum):
-    Webnovel = "https://www.webnovel.com"
     LightNovelCave = "https://www.lightnovelcave.com"
+    NovelBin = "https://novel-bin.com"
+    Webnovel = "https://www.webnovel.com"
     NovelCool = "https://www.novelcool.com"
 
 

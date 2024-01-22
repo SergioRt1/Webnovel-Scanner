@@ -4,14 +4,13 @@ import shutil
 import pickle
 
 from logic.entities import Novel, Chapter
-from utils import string_matching
 
 
 def sanitize_filename(filename: str) -> str:
     invalid_chars = ['<', '>', ':', '"', '/', '\\', '|', '?', '*']
     for char in invalid_chars:
         filename = filename.replace(char, '_')
-    return filename
+    return filename[:255]
 
 
 class SimpleFileDB:
@@ -31,19 +30,19 @@ class SimpleFileDB:
 
         return novel_folder_path
 
-    def _get_chapter_file_path(self, novel_title, chapter_title):
-        sanitized_chapter_title = sanitize_filename(chapter_title)
+    def _get_chapter_file_path(self, novel_title, chapter: Chapter):
+        sanitized_chapter_title = sanitize_filename(chapter.title)
 
         novel_folder_path = self._get_novel_folder_path(novel_title)
         return os.path.join(novel_folder_path, f"{sanitized_chapter_title}.pkl")
 
     def set_chapter(self, novel: Novel, chapter: Chapter):
-        chapter_path = self._get_chapter_file_path(novel.title, chapter.title)
+        chapter_path = self._get_chapter_file_path(novel.title, chapter)
         with open(chapter_path, 'wb') as file:
             pickle.dump(chapter.content, file)
 
     def get_chapter_content(self, novel: Novel, chapter: Chapter):
-        chapter_path = self._get_chapter_file_path(novel.title, chapter.title)
+        chapter_path = self._get_chapter_file_path(novel.title, chapter)
         try:
             with open(chapter_path, 'rb') as file:
                 return pickle.load(file)
@@ -72,7 +71,8 @@ class SimpleFileDB:
         if novel is None:
             return None
 
-        chapters_files = self.get_saved_chapters(novel_title)
+        novel.downloaded_set = set()
+        # chapters_files = self.get_saved_chapters(novel_title)
 
         # Populate chapter content from individual chapter files
         for chapter in novel.chapter_list:

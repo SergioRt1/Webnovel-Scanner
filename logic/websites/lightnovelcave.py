@@ -16,7 +16,7 @@ class LightNovelCave(NormalWebsite):
             '_get_description': '#info > div.summary > div',
             '_get_author': '#novel > header > div.header-body.container > div.novel-info > div.main-head > div.author > a > span',
             '_get_cover_img': '#novel > header > div.header-body.container > div.fixed-img > figure > img',
-            'get_table_content_element': '#novel > div > nav > a.grdbtn.chapter-latest-container',
+            'get_table_content_clickable_element': '#novel > div > nav > a.grdbtn.chapter-latest-container',
             'get_chapter_list': '#chpagedlist > ul',
             'get_chapter_content': '#chapter-container',
         }
