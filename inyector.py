@@ -1,4 +1,5 @@
 from db.file import SimpleFileDB
+from logic.filter import ContentFilter
 from logic.novel_downloader import NovelDownloader
 from logic.selenium_web import ScrapperSelenium, get_driver
 from logic.websites import Website
@@ -22,8 +23,9 @@ def build_app(use_undetected, max_per_volume):
     }
     scrapper = ScrapperSelenium(db, driver, websites, use_undetected)
     downloader = NovelDownloader(db, scrapper, max_per_volume)
+    filter = ContentFilter()
 
-    app = NovelUI(downloader)
+    app = NovelUI(downloader, filter)
     driver.start_client()
 
     return app

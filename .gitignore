@@ -1,3 +1,6 @@
-internal/*
+internal/database/
+internal/img/covers
 Novels/*
 .idea
+*/__pycache__
+*.pyc

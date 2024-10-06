@@ -1,3 +1,5 @@
+from typing import List
+
 from db.file import SimpleFileDB
 from .entities import Novel
 from .selenium_web import ScrapperSelenium
@@ -11,7 +13,7 @@ class NovelDownloader:
 
         self.novels = self._get_all_novels()
 
-    def search_novel(self, novel_url, website_name: str) -> [Novel]:
+    def search_novel(self, novel_url, website_name: str) -> List[Novel]:
         novel = self.scrapper.search_basic_novel_info(novel_url, website_name)
         novel.chapter_list = self.scrapper.get_chapter_list(novel)
 
@@ -22,8 +24,9 @@ class NovelDownloader:
     def sync_novels(self):
         self.novels = self._get_all_novels()
 
-    def _get_all_novels(self) -> [Novel]:
-        return sorted(self.db.get_all(), key=lambda novel: novel.title)
+    def _get_all_novels(self) -> List[Novel]:
+        novels = self.db.get_all()
+        return sorted(novels, key=lambda novel: (novel.is_downloaded(), novel.title))
 
     def download_novel(self, novel: Novel):
         try:

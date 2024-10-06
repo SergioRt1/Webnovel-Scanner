@@ -1,7 +1,7 @@
 import os
 
 from utils import constants
-from db import img
+from db import img, file as filemanager
 
 
 class Chapter:
@@ -49,13 +49,14 @@ class Novel:
         return len(self.get_chapters_to_download()) == len(self.chapter_list)
 
     def write_to_txt(self, max_per_chapter=300):
-        output_folder = os.path.join('Novels', self.title)
+        novel_title = filemanager.sanitize_filename(self.title)
+        output_folder = os.path.join('Novels', novel_title)
         os.makedirs(output_folder, exist_ok=True)
 
         volume_count = 1
         chapter_count = 0
 
-        file_path = os.path.join(output_folder, f'{self.title} {volume_count}.txt')
+        file_path = os.path.join(output_folder, f'{novel_title} {volume_count}.txt')
         file = open(file_path, "w+", encoding="utf-8")
 
         for chapter in self.chapter_list:
@@ -64,7 +65,7 @@ class Novel:
                 volume_count += 1
                 chapter_count = 0
                 file.close()
-                file_path = os.path.join(output_folder, f'{self.title} {volume_count}.txt')
+                file_path = os.path.join(output_folder, f'{novel_title} {volume_count}.txt')
                 file = open(file_path, "w+", encoding="utf-8")
             file.write(f'\n--------\n{chapter.title}\n')
             file.write('\n' + chapter.content + '\n')

@@ -5,6 +5,7 @@ from tkinter import ttk
 
 from PIL import Image, ImageTk, ImageSequence
 
+from logic.filter import ContentFilter
 from logic.novel_downloader import NovelDownloader
 from logic.websites import get_website_ids
 from utils import constants
@@ -27,8 +28,9 @@ def threaded_task(task):
 
 
 class NovelUI:
-    def __init__(self, downloader: NovelDownloader):
+    def __init__(self, downloader: NovelDownloader, filter: ContentFilter):
         self.downloader = downloader
+        self.filter = filter
 
         # Setup main window
         self.root = tk.Tk()
@@ -152,6 +154,7 @@ class NovelUI:
 
     @threaded_task
     def export_novel(self, novel):
+        #novel = self.filter.filter_content(novel)
         self.downloader.write_novel(novel)
 
     @threaded_task
