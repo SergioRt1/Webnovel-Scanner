@@ -1,6 +1,10 @@
 internal/database/
 internal/img/covers
 Novels/*
+ml_data/training_data.csv
 .idea
 */__pycache__
 *.pyc
+venv
+results
+saved_model

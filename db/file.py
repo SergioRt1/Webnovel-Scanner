@@ -59,6 +59,7 @@ class SimpleFileDB:
         # Strip the content from each chapter in the copied novel
         for chapter in novel_copy.chapter_list:
             chapter.content = ""
+            chapter.df = []
 
         novel_path = self._get_novel_file_path(novel.title)
         with open(novel_path, 'wb') as file:

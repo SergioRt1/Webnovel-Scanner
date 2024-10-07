@@ -5,6 +5,7 @@ import undetected_chromedriver as uc
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.core.os_manager import ChromeType
 
 from db.file import SimpleFileDB
 from utils import selenium
@@ -12,12 +13,16 @@ from .entities import Chapter, Novel
 from .websites import Website, BasicWebsite
 
 
-def get_driver(use_undetected: bool) -> webdriver.Chrome:
+def get_driver(use_undetected: bool, is_chromium: bool) -> webdriver.Chrome:
+    type = ChromeType.GOOGLE
+    if is_chromium:
+        type = ChromeType.CHROMIUM
     if use_undetected:
         options = webdriver.ChromeOptions()
-        options.add_argument("start-maximized")
+        options.add_argument("--start-maximized")
         options.add_argument('--disable-popup-blocking')
-        driver_service = ChromeService(ChromeDriverManager().install())
+
+        driver_service = ChromeService(ChromeDriverManager(chrome_type=type).install())
         return uc.Chrome(options=options, use_subprocess=False, driver_executable_path=driver_service.path)
     else:
         return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))

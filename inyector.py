@@ -10,10 +10,10 @@ from logic.websites.webnovel import WebNovel
 from ui import NovelUI
 
 
-def build_app(use_undetected, max_per_volume):
+def build_app(use_undetected, max_per_volume, is_chromium):
     db = SimpleFileDB()
 
-    driver = get_driver(use_undetected)
+    driver = get_driver(use_undetected, is_chromium)
     driver.stop_client()
     websites = {
         Website.Webnovel: WebNovel(driver),

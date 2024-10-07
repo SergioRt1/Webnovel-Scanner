@@ -10,6 +10,13 @@ from logic.novel_downloader import NovelDownloader
 from logic.websites import get_website_ids
 from utils import constants
 
+from ml_processor.train_model import train
+from ml_processor.labeler import build_training_data
+from ml_processor import prediction
+
+import platform
+import os
+import subprocess
 
 def threaded_task(task):
     @wraps(task)
@@ -152,10 +159,176 @@ class NovelUI:
         self.details_frame = ttk.Frame(self.root)
         self.details_frame.pack(pady=10, fill='both', expand=True, padx=20, side='right')
 
-    @threaded_task
     def export_novel(self, novel):
-        #novel = self.filter.filter_content(novel)
-        self.downloader.write_novel(novel)
+        # Create a new Toplevel window for ML options
+        self.ml_window = tk.Toplevel(self.root)
+        self.ml_window.title("ML Processor Options")
+        self.ml_window.geometry("400x200")
+
+        open_non_novel_button = ttk.Button(self.ml_window, text="Open Non-Novel Content", command=self.open_non_novel_content)
+        open_non_novel_button.pack(pady=5)
+
+        open_novel_like_button = ttk.Button(self.ml_window, text="Open Novel-Like Content", command=self.open_novel_like_content)
+        open_novel_like_button.pack(pady=5)
+
+        train_model_button = ttk.Button(self.ml_window, text="Train Model", command=lambda: self.train_model(novel))
+        train_model_button.pack(pady=5)
+
+        skip_button = ttk.Button(self.ml_window, text="Skip Training", command=lambda: self.skip_training(novel))
+        skip_button.pack(pady=5)
+
+################ ML Functions ##########################
+    @threaded_task
+    def train_model(self, novel):
+        build_training_data()
+        train()
+        tk.messagebox.showinfo("Training Complete", "The model has been trained successfully.")
+        self.ml_window.destroy()
+        self.show_prediction_view(novel)
+
+    def skip_training(self, novel):
+        self.ml_window.destroy()
+        self.show_prediction_view(novel)
+
+    def show_prediction_view(self, novel):
+        self.prediction_window = tk.Toplevel(self.root)
+        self.prediction_window.title("Run ML Model")
+        self.prediction_window.geometry("800x150")
+
+        run_model_button = ttk.Button(self.prediction_window, text="Run Model", command=lambda: self.run_model(novel))
+        run_model_button.pack(pady=5)
+
+        self.prediction_label = tk.Label(self.prediction_window, text="Starting predictions...", font=("Arial", 12))
+        self.prediction_label.pack(pady=20)
+
+    @threaded_task
+    def run_model(self, novel):
+        model, tokenizer = prediction.load_model()
+        i = 0
+        total = len(novel.chapter_list)
+        for chapter in novel.chapter_list:
+            self.prediction_label.config(text=f'Predicting: {chapter.title}\n({i}/{total})')
+            self.prediction_window.update_idletasks() 
+            print(f'Predicting: {chapter.title}')
+            chapter.df = prediction.predict(model, tokenizer, chapter.content)
+            print("\033[A\r\033[K", end='')  # Delete a line in the CLI, Move up one line, clear the line
+            print("\033[A\r\033[K", end='')
+            print("\033[A\r\033[K", end='')
+            i += 1
+
+        self.prediction_window.destroy()
+        self.review_flagged_sentences(novel)
+    
+    def review_flagged_sentences(self, novel):
+        self.novel = novel
+        self.chapter_index = 0  # Keep track of the current chapter
+        self.current_sentence_index = 0  # Keep track of the current sentence in the chapter
+        self.chapters_with_flags = []  # List to store chapters that have flagged sentences
+
+        # Collect all chapters that have flagged sentences
+        for chapter in novel.chapter_list:
+            flagged_df = chapter.df[chapter.df['Prediction'] == 1]
+            if not flagged_df.empty:
+                self.chapters_with_flags.append((chapter, flagged_df))
+
+        # Initialize the main window for sentence review
+        self.init_review_window()
+        self.review_next_flagged_sentence()
+
+    def init_review_window(self):
+        # Create the window for reviewing sentences
+        self.review_window = tk.Toplevel(self.root)
+        self.review_window.title("Review Flagged Sentences")
+
+        self.chapter_label = tk.Label(self.review_window, text="", font=("Arial", 12, "bold"))
+        self.chapter_label.pack(pady=5)
+
+        self.sentence_text = tk.Text(self.review_window, height=10, width=80)
+        self.sentence_text.pack(pady=10)
+
+        button_frame = ttk.Frame(self.review_window)
+        button_frame.pack(pady=10)
+
+        self.save_button = ttk.Button(button_frame, text="Save", command=self.save_sentence)
+        self.save_button.pack(side='left', padx=10)
+
+        self.remove_button = ttk.Button(button_frame, text="Remove", command=self.remove_sentence)
+        self.remove_button.pack(side='right', padx=10)
+
+    def review_next_flagged_sentence(self):
+        if self.chapter_index < len(self.chapters_with_flags):
+            chapter, flagged_df = self.chapters_with_flags[self.chapter_index]
+            if self.current_sentence_index < len(flagged_df):
+                # Get the sentence and its index in chapter.df
+                original_index = flagged_df.index[self.current_sentence_index]
+                sentence = flagged_df.loc[original_index, 'Sentence']
+                self.display_flagged_sentence(sentence, chapter.title)
+            else:
+                # Move to the next chapter
+                self.chapter_index += 1
+                self.current_sentence_index = 0
+                self.review_next_flagged_sentence()
+        else:
+            self.finalize_cleaned_novel()
+
+    def display_flagged_sentence(self, sentence, chapter_title):
+        # Update chapter label and sentence text
+        self.chapter_label.config(text=f"Chapter: {chapter_title} ({self.chapter_index+1}/{len(self.chapters_with_flags)})")
+        self.sentence_text.delete('1.0', 'end')
+        self.sentence_text.insert('1.0', sentence)
+
+    def save_sentence(self):
+        edited_sentence = self.sentence_text.get('1.0', 'end-1c')
+        chapter, flagged_df = self.chapters_with_flags[self.chapter_index]
+        original_index = flagged_df.index[self.current_sentence_index]
+        chapter.df.loc[original_index, 'Sentence'] = edited_sentence
+        self.current_sentence_index += 1
+        self.review_next_flagged_sentence()
+
+    def remove_sentence(self):
+        chapter, flagged_df = self.chapters_with_flags[self.chapter_index]
+        original_index = flagged_df.index[self.current_sentence_index]
+        chapter.df.loc[original_index, 'Sentence'] = ''
+        self.current_sentence_index += 1
+        self.review_next_flagged_sentence()
+
+    def finalize_cleaned_novel(self):
+        for chapter in self.novel.chapter_list:
+            # Rebuild chapter content from the df['Sentence']
+            sentences = chapter.df['Sentence'].tolist()
+            chapter.content = ' '.join(sentences)
+        self.review_window.destroy()
+        # Write the modified novel
+        self.downloader.write_novel(self.novel)
+        tk.messagebox.showinfo("Process Complete", "Filtered novel saved successfully.")
+
+
+    def open_non_novel_content(self):
+        file_path = "./ml_data/non-novel.txt"
+        self.open_text_file(file_path)
+    
+    def open_novel_like_content(self):
+        file_path = "./ml_data/novel-like.txt"
+        self.open_text_file(file_path)
+    
+    def open_text_file(self, file_path):
+        if os.path.exists(file_path):
+            current_os = platform.system()
+
+            if current_os == "Windows":
+                os.startfile(file_path)  # For Windows, not tested
+            elif current_os == "Darwin":
+                subprocess.call(('open', file_path))  # For macOS, not tested
+            elif current_os == "Linux":
+                subprocess.call(('xdg-open', file_path))  # For Linux
+            else:
+                tk.messagebox.showerror("Error", f"Unsupported OS: {current_os}")
+        else:
+            tk.messagebox.showerror("Error", "Content file not found.")
+    
+
+
+################ ML Functions - END ####################
 
     @threaded_task
     def download_novel(self, novel):

@@ -2,7 +2,7 @@ ebooklib==0.18
 
 selenium~=4.11.2
 webdriver-manager==4.0.2
-undetected-chromedriver==3.5.2
+undetected-chromedriver==3.5.5
 
 Pillow==9.4.0
 tk==0.1.0

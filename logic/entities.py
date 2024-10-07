@@ -3,12 +3,15 @@ import os
 from utils import constants
 from db import img, file as filemanager
 
+import pandas as pd
+from typing import List
 
 class Chapter:
     def __init__(self, title, url):
         self.title = title
         self.url = url
         self.content = ""
+        self.df = pd.DataFrame()
 
     def __str__(self):
         return self.title
@@ -18,8 +21,8 @@ class Novel:
     def __init__(self, title: str, author: str, url: str, desc: str,
                  website,
                  image: str = constants.placeholder_image,
-                 chapter_list: [Chapter] = None,
-                 downloaded_list=None):
+                 chapter_list: List[Chapter] = None,
+                 downloaded_list: List = None):
         self.title = title
         self.author = author
         self.url = url
