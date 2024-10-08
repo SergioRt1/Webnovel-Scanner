@@ -6,6 +6,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.os_manager import ChromeType
+from typing import List
 
 from db.file import SimpleFileDB
 from utils import selenium
@@ -28,7 +29,7 @@ def get_driver(use_undetected: bool, is_chromium: bool) -> webdriver.Chrome:
         return webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()))
 
 
-def _fix_duplicates(chapter_list: [Chapter]) -> [Chapter]:
+def _fix_duplicates(chapter_list: List[Chapter]) -> List[Chapter]:
     titles = set()
     duplicated_titles = {}
 
@@ -104,7 +105,7 @@ class ScrapperSelenium:
             self.fetch_page(novel_url, "Searching metadata")
             return website.search_novel_metadata(novel_url)
 
-    def get_chapter_list(self, novel: Novel) -> [Chapter]:
+    def get_chapter_list(self, novel: Novel) -> List[Chapter]:
         website = self.websites.get(novel.website)
         if website:
             return self._get_chapter_list(website)
