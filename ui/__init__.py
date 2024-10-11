@@ -67,7 +67,7 @@ class NovelUI:
         self._add_book_details_frame()
 
     def setup_constants(self):
-        self.auto_remove_delay = 1000
+        self.auto_remove_delay = 1300
         self.certainty_threshold = 0.998
 
     def _add_search_bar(self):
@@ -193,10 +193,11 @@ class NovelUI:
     def show_prediction_view(self, novel):
         self.prediction_window = tk.Toplevel(self.root)
         self.prediction_window.title("Run ML Model")
-        self.prediction_window.geometry("800x150")
+        self.prediction_window.geometry("800x200")
 
         ttk.Button(self.prediction_window, text="Run Model", command=lambda: self.run_model(novel)).pack(pady=5)
-        self.prediction_label = tk.Label(self.prediction_window, text="Starting predictions...", font=("Arial", 12))
+        ttk.Button(self.prediction_window, text="Skip Model evaluation", command=lambda: self.skip_prediction(novel)).pack(pady=5)
+        self.prediction_label = tk.Label(self.prediction_window, text="Evaluate all chapther using the ML model", font=("Arial", 12))
         self.prediction_label.pack(pady=20)
 
     @threaded_task
@@ -258,7 +259,7 @@ class NovelUI:
         self.review_window.bind('<Control-s>', lambda event: self.save_sentence())
         self.review_window.bind('<Control-d>', lambda event: self.remove_sentence())
         self.review_window.bind('<Control-e>', lambda event: self.stop_auto_remove())
-        self.review_window.bind('<Control-Space>', lambda event: self.stop_auto_remove())
+        self.review_window.bind('<Control-space>', lambda event: self.stop_auto_remove())
 
     def review_next_flagged_sentence(self):
         if self.chapter_index < len(self.chapters_with_flags):
@@ -323,9 +324,21 @@ class NovelUI:
             sentences = chapter.df['Sentence'].tolist()
             chapter.content = ' '.join(sentences)
         self.review_window.destroy()
-        self.downloader.write_novel(self.novel)
-        tk.messagebox.showinfo("Process Complete", "Filtered novel saved successfully.")
+        self.write_novel(self.novel)
+        message = "Filtered novel saved successfully."
+        if len(self.chapters_with_flags) == 0:
+            message = "No non-novel content found, novel saved successfully."
+        tk.messagebox.showinfo("Process Complete", message)
+    
+    @threaded_task
+    def skip_prediction(self, novel):
+        self.prediction_window.destroy()
+        self.write_novel(novel)
 
+        tk.messagebox.showinfo("Process Complete", "Novel saved successfully.")
+    
+    def write_novel(self, novel):
+        self.downloader.write_novel(novel)
 
     def open_non_novel_content(self):
         self.open_text_file("./ml_data/non-novel.txt")
