@@ -170,10 +170,19 @@ class NovelUI:
         self.ml_window.title("ML Processor Options")
         self.ml_window.geometry("400x200")
 
+        self.filter_novel_var = tk.BooleanVar(value=False)
+
+        ttk.Checkbutton(self.ml_window,text="Filter duplicate chapters",variable=self.filter_novel_var).pack(pady=5)
+
         ttk.Button(self.ml_window, text="Open Non-Novel Content", command=self.open_non_novel_content).pack(pady=5)
         ttk.Button(self.ml_window, text="Open Novel-Like Content", command=self.open_novel_like_content).pack(pady=5)
-        ttk.Button(self.ml_window, text="Train Model", command=lambda: self.train_model(novel)).pack(pady=5)
-        ttk.Button(self.ml_window, text="Skip Training", command=lambda: self.skip_training(novel)).pack(pady=5)
+        ttk.Button(self.ml_window, text="Train Model", command=lambda: self.train_model(self.apply_filter(novel))).pack(pady=5)
+        ttk.Button(self.ml_window, text="Skip Training", command=lambda: self.skip_training(self.apply_filter(novel))).pack(pady=5)
+
+    def apply_filter(self, novel):
+        if self.filter_novel_var.get():
+            return self.filter.filter_content(novel)
+        return novel
 
     ################ ML Functions ##########################
     @threaded_task

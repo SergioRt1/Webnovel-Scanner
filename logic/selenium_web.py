@@ -58,6 +58,7 @@ class ScrapperSelenium:
         self.driver = driver
         self.use_undetected_driver = use_undetected_driver
         self.db = db
+        self.load_delay = 0.8 # Default 0.8
 
     def scroll_to_end(self) -> None:
         """
@@ -83,7 +84,7 @@ class ScrapperSelenium:
             except Exception as ex:
                 current += 1
                 print("Error loading Page", ex)
-                time.sleep(0.8)
+                time.sleep(self.load_delay)
         raise ConnectionError("Error loading page")
 
     def _get_chapter_list(self, website):

@@ -1,44 +1,50 @@
-from collections import Counter
+import difflib
+
 from .entities import Novel
 
+
+# -------------------------------
+# Content filter that removes near-duplicate chapters
+# -------------------------------
+
 class ContentFilter:
-    def filter_content(self, novel: Novel) -> Novel:
-        num_chapters = len(novel.chapter_list)
+    def filter_content(self, novel: Novel, threshold: float = 0.75, window_size: int = 1) -> Novel:
+        """
+        Removes duplicate chapters from the novel by comparing chapter content only against
+        the last 'window_size' accepted chapters. If the similarity ratio between the new chapter
+        and any chapter in the window is above the threshold, the new chapter is considered a duplicate.
+        """
         filtered_chapters = []
+        print("")
+        i = 0
+        for chapter in novel.chapter_list:
+            i+=1
 
-        window_lines = []
-        start_index = -1
-        start_len = 0
-        current_len = 0
-        end_index = 1
+            normalized_content = chapter.content.strip().lower()
+            duplicate_found = False
 
-        for i in range(num_chapters):
-            if start_index >= 0:
-                window_lines = window_lines[start_len:]
-            else:
-                first_chapter_lines = novel.chapter_list[0].content.splitlines()
-                start_len = len(first_chapter_lines)
-                window_lines.extend([line.strip().lower() for line in first_chapter_lines])
-                
-            if end_index < num_chapters:
-                end_chapter_lines = novel.chapter_list[end_index].content.splitlines()
-                current_len = len(end_chapter_lines)
-                window_lines.extend([line.strip().lower() for line in end_chapter_lines])
+            # Only compare against the last 'window_size' accepted chapters
+            window = filtered_chapters[-window_size:] if len(filtered_chapters) >= window_size else filtered_chapters
+            print(f"{i}/{len(novel.chapter_list)}")
+            for accepted in window:
+                accepted_content = accepted.content.strip().lower()
 
-            line_count = Counter(window_lines)
+                matcher = difflib.SequenceMatcher(None, normalized_content, accepted_content)
+                ratio = matcher.ratio()
+                if ratio >= threshold:
+                    print("\033[A\r\033[K", end='')
+                    print("\033[A\r\033[K", end='')
+                    print("\033[A\r\033[K", end='')
+                    print(f"Duplicate chapter detected: '{chapter.title}' is similar to "
+                          f"'{accepted.title}' (similarity: {ratio:.2f}). Removing it.")
+                    duplicate_found = True
+                    break
 
-            filtered_lines = []
-            chapter_lines = novel.chapter_list[i].content.splitlines()
+            if not duplicate_found:
+                print("\033[A\r\033[K", end='')  # Delete a line in the CLI, Move up one line, clear the line
+                print("\033[A\r\033[K", end='')
+                print("\033[A\r\033[K", end='')
+                filtered_chapters.append(chapter)
 
-            for line in chapter_lines:
-                stripped_line = line.strip().lower()
-                if line_count[stripped_line] > 1 and len(stripped_line)> 10:
-                    print(f"Duplicated block detected in chapter {i+1}: '{line}'")
-                else:
-                    filtered_lines.append(line)
-
-            novel.chapter_list[i].content = '\n'.join(filtered_lines)
-
-            start_len = current_len
-
+        novel.chapter_list = filtered_chapters
         return novel
