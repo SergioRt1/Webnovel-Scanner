@@ -1,5 +1,5 @@
 from db.file import SimpleFileDB
-from logic.filter import ContentFilter
+from logic.filters.lsh_filter import ContentFilterLSH
 from logic.novel_downloader import NovelDownloader
 from logic.selenium_web import ScrapperSelenium, get_driver
 from logic.websites import Website
@@ -14,7 +14,9 @@ def build_app(use_undetected, max_per_volume, is_chromium):
     db = SimpleFileDB()
 
     driver = get_driver(use_undetected, is_chromium)
-    driver.stop_client()
+    driver.set_page_load_timeout(10)  # Timeout for driver.get()
+    driver.set_script_timeout(10)     # Timeout for async JS execution
+
     websites = {
         Website.Webnovel: WebNovel(driver),
         Website.NovelBin: NovelBin(driver),
@@ -23,9 +25,9 @@ def build_app(use_undetected, max_per_volume, is_chromium):
     }
     scrapper = ScrapperSelenium(db, driver, websites, use_undetected)
     downloader = NovelDownloader(db, scrapper, max_per_volume)
-    filter = ContentFilter()
+    content_filter = ContentFilterLSH()
 
-    app = NovelUI(downloader, filter)
+    app = NovelUI(downloader, content_filter)
     driver.start_client()
 
     return app

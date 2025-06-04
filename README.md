@@ -41,7 +41,7 @@ pip install -r requirements.txt
 ### 5. Install the ML dependency:
 Install the [novel_cleaner](https://github.com/SergioRt1/novel-cleaner) library by specifying its root path:
 ```bash
-pip install /home/user/projects/novel_cleaner  # Update the path as needed
+pip install /home/user/proyects/novel_cleaner  # Update the path as needed
 ```
 (Optional) If using PyTorch with ROCm:
    ```bash

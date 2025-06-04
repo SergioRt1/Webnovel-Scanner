@@ -7,6 +7,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.core.os_manager import ChromeType
 from typing import List
+from tqdm import tqdm
 
 from db.file import SimpleFileDB
 from utils import selenium
@@ -58,33 +59,30 @@ class ScrapperSelenium:
         self.driver = driver
         self.use_undetected_driver = use_undetected_driver
         self.db = db
-        self.load_delay = 0.8 # Default 0.8
 
-    def scroll_to_end(self) -> None:
+    def scroll_to_end(self, load_delay: float = 1) -> None:
         """
         Scrolls to the bottom of the page.
         This is a blocking function.
         """
-        delay = random.uniform(1, 2) if self.use_undetected_driver else 0.5
+        delay = random.uniform(load_delay, load_delay+0.5) if self.use_undetected_driver else load_delay
         delta = random.uniform(0.1, 0.3) if self.use_undetected_driver else 0.1
         time.sleep(delay)
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight)")
         time.sleep(delay + delta)
 
-    def fetch_page(self, url: str, title: str) -> None:
-        max_retry = 5
+    def fetch_page(self, url: str, load_delay: float = 1) -> None:
+        max_retry = 3
         current = 0
         while current < max_retry:
             try:
-                print(f"Loading [{title}] {url}...", end="")
                 self.driver.get(url)
-                print(" Loaded")
-                self.scroll_to_end()
+                self.scroll_to_end(load_delay)
                 return
             except Exception as ex:
                 current += 1
                 print("Error loading Page", ex)
-                time.sleep(self.load_delay)
+                time.sleep(load_delay)
         raise ConnectionError("Error loading page")
 
     def _get_chapter_list(self, website):
@@ -103,10 +101,10 @@ class ScrapperSelenium:
     def search_basic_novel_info(self, novel_url: str, website_name) -> Novel | None:
         website = self.websites.get(Website(website_name))
         if website:
-            self.fetch_page(novel_url, "Searching metadata")
+            self.fetch_page(novel_url)
             return website.search_novel_metadata(novel_url)
 
-    def get_chapter_list(self, novel: Novel) -> List[Chapter]:
+    def get_chapter_list(self, novel: Novel) -> List[Chapter] | None:
         website = self.websites.get(novel.website)
         if website:
             return self._get_chapter_list(website)
@@ -116,13 +114,17 @@ class ScrapperSelenium:
 
     def download_novel(self, novel: Novel):
         website = self.websites.get(novel.website)
-        for chapter in novel.get_chapters_to_download():
-            self.fetch_page(chapter.url, chapter.title)
-            content = website.get_chapter_content()
-            if not content:
-                continue
+        chapters = novel.get_chapters_to_download()
 
-            chapter.content = content
-            novel.downloaded_set.add(chapter.title)
+        with tqdm(chapters, desc="Loading") as pbar:
+            for chapter in pbar:
+                pbar.set_postfix_str(f"{chapter.title}: {chapter.url}")
+                self.fetch_page(chapter.url, website.get_loading_delay())
+                content = website.get_chapter_content()
+                if not content:
+                    continue
 
-            self.db.set_chapter(novel, chapter)
+                chapter.content = content
+                novel.downloaded_set.add(chapter.title)
+
+                self.db.set_chapter(novel, chapter)

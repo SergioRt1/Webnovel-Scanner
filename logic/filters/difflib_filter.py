@@ -1,13 +1,13 @@
 import difflib
 
-from .entities import Novel
-
+from logic.entities import Novel
+from logic.filters import ContentFilter
 
 # -------------------------------
 # Content filter that removes near-duplicate chapters
 # -------------------------------
 
-class ContentFilter:
+class DiffContentFilter(ContentFilter):
     def filter_content(self, novel: Novel, threshold: float = 0.75, window_size: int = 1) -> Novel:
         """
         Removes duplicate chapters from the novel by comparing chapter content only against
@@ -17,6 +17,7 @@ class ContentFilter:
         filtered_chapters = []
         print("")
         i = 0
+        count = 0
         for chapter in novel.chapter_list:
             i+=1
 
@@ -38,6 +39,7 @@ class ContentFilter:
                     print(f"Duplicate chapter detected: '{chapter.title}' is similar to "
                           f"'{accepted.title}' (similarity: {ratio:.2f}). Removing it.")
                     duplicate_found = True
+                    count+=1
                     break
 
             if not duplicate_found:
@@ -46,5 +48,6 @@ class ContentFilter:
                 print("\033[A\r\033[K", end='')
                 filtered_chapters.append(chapter)
 
+        print('Total duplicate chapter detected: ', count)
         novel.chapter_list = filtered_chapters
         return novel

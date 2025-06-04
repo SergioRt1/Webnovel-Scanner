@@ -1,17 +1,19 @@
 import threading
 import tkinter as tk
+import os
+import webbrowser
+
 from functools import wraps
 from tkinter import ttk
 from PIL import Image, ImageTk, ImageSequence
-from logic.filter import ContentFilter
+from logic.filters import ContentFilter
 from logic.novel_downloader import NovelDownloader
 from logic.websites import get_website_ids
 from utils import constants
 from ml_processor.train_model import train
 from ml_processor.labeler import build_training_data
 from ml_processor import prediction
-import os
-import webbrowser
+from tqdm import tqdm
 
 
 def threaded_task(task):
@@ -67,8 +69,8 @@ class NovelUI:
         self._add_book_details_frame()
 
     def setup_constants(self):
-        self.auto_remove_delay = 1300
-        self.certainty_threshold = 0.998
+        self.auto_remove_delay = 1000
+        self.certainty_threshold = 0.98
 
     def _add_search_bar(self):
         frame = ttk.Frame(self.root)
@@ -213,18 +215,15 @@ class NovelUI:
     def run_model(self, novel):
         model, tokenizer = prediction.load_model()
         total_chapters = len(novel.chapter_list)
-        for i, chapter in enumerate(novel.chapter_list, start=1):
-            def update_label(chapter_title=chapter.title, i=i):
-                self.prediction_label.config(text=f'Predicting: {chapter_title}\n({i}/{total_chapters})')
-            self.root.after(0, update_label)
+        with tqdm(list(enumerate(novel.chapter_list, start=1)), desc="ML", position=0) as pbar:
+            for i, chapter in pbar:
+                pbar.set_description(f"ML {chapter.title}")
+                def update_label(chapter_title=chapter.title, i=i):
+                    self.prediction_label.config(text=f'Predicting: {chapter_title}\n({i}/{total_chapters})')
+                self.root.after(0, update_label)
 
-            print(f'Predicting: {chapter.title}')
-            chapter.df = prediction.predict(model, tokenizer, chapter.content)
-            
-            print("\033[A\r\033[K", end='')  # Delete a line in the CLI, Move up one line, clear the line
-            print("\033[A\r\033[K", end='')
-            print("\033[A\r\033[K", end='')
-            i += 1
+                chapter.df = prediction.predict(model, tokenizer, chapter.content)
+                i += 1
         def after_prediction():
             self.prediction_window.destroy()
             self.review_flagged_sentences(novel)

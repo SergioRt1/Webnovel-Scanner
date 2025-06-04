@@ -54,6 +54,9 @@ class BasicWebsite(ABC):
     def _get_cover_img(self, novel_title):
         pass
 
+    def get_loading_delay(self) -> float:
+        return 1
+
     def search_novel_metadata(self, novel_url):
         novel_title = self._get_title()
         return Novel(

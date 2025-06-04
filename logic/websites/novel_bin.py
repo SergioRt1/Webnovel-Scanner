@@ -22,3 +22,6 @@ class NovelBin(NormalWebsite):
         img_src = self._get_image_src(self.selectors['_get_cover_img'])
 
         return image.download_with_screenshot(self.driver, novel_title, img_src) if img_src else None
+
+    def get_loading_delay(self) -> float:
+        return 0.9
