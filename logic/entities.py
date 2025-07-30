@@ -61,6 +61,7 @@ class Novel:
 
         file_path = os.path.join(output_folder, f'{novel_title} {volume_count}.txt')
         file = open(file_path, "w+", encoding="utf-8")
+        # sort chapters: self.chapter_list.sort(key=lambda ch: int(re.search(r'\d+', ch.title).group()))
 
         for chapter in self.chapter_list:
             chapter_count += 1
