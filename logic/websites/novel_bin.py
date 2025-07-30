@@ -1,6 +1,9 @@
+from time import sleep
+
 from selenium import webdriver
 
 from logic.websites import Website
+from logic.entities import Chapter
 from logic.websites.normal_website import NormalWebsite
 from utils import image
 
@@ -24,4 +27,8 @@ class NovelBin(NormalWebsite):
         return image.download_with_screenshot(self.driver, novel_title, img_src) if img_src else None
 
     def get_loading_delay(self) -> float:
-        return 0.9
+        return 1.5
+
+    def get_chapter_list(self) -> [Chapter]:
+        sleep(2.5)
+        return super().get_chapter_list()
