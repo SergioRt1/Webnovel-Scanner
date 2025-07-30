@@ -20,20 +20,22 @@ def _build_minhash(chapter, num_perm: int) -> tuple:
 class ContentFilterLSH(ContentFilter):
     def filter_content(self, novel: Novel, threshold: float = 0.75, num_perm: int = 128) -> Novel:
         # Build MinHash signature for every chapter
-        minhashes = []
         n = len(novel.chapter_list)
+        # Preallocate results to maintain order
+        minhashes = [None] * n
 
         with ProcessPoolExecutor() as executor:
             # Each worker runs _build_minhash(chapter, num_perm) → (chapter, MinHash)
-            futures = [
-                executor.submit(_build_minhash, ch, num_perm) for ch in novel.chapter_list
-            ]
+            futures = {
+                executor.submit(_build_minhash, ch, num_perm):i for i, ch in enumerate(novel.chapter_list)
+            }
 
             for future in tqdm(as_completed(futures),
                                total=n,
                                desc="Build MinHash"):
+                idx = futures[future]
                 chapter, mh = future.result()
-                minhashes.append((chapter, mh))
+                minhashes[idx] = (chapter, mh)
 
         # Insert into LSH index
         lsh = MinHashLSH(threshold=threshold, num_perm=num_perm)

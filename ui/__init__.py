@@ -172,7 +172,7 @@ class NovelUI:
         self.ml_window.title("ML Processor Options")
         self.ml_window.geometry("400x200")
 
-        self.filter_novel_var = tk.BooleanVar(value=False)
+        self.filter_novel_var = tk.BooleanVar(value=True)
 
         ttk.Checkbutton(self.ml_window,text="Filter duplicate chapters",variable=self.filter_novel_var).pack(pady=5)
 
