@@ -26,7 +26,7 @@ class NovelDownloader:
 
     def _get_all_novels(self) -> List[Novel]:
         novels = self.db.get_all()
-        return sorted(novels, key=lambda novel: (novel.is_downloaded(), novel.title))
+        return sorted(novels, key=lambda novel: novel.title)
 
     def download_novel(self, novel: Novel):
         try:

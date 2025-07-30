@@ -2,6 +2,7 @@ import threading
 import tkinter as tk
 import os
 import webbrowser
+from more_itertools import partition
 
 from functools import wraps
 from tkinter import ttk
@@ -92,10 +93,42 @@ class NovelUI:
             widget.destroy()
 
     def display_books(self, book_list):
-        for i, novel in enumerate(book_list):
-            button = ttk.Button(self.scrollable_frame, text=novel.title,
-                                command=lambda n=novel: self._add_book_image_and_details(n))
-            button.grid(row=i, column=0, pady=5, padx=5, sticky='ew')
+        new, downloaded = partition(lambda n: n.is_downloaded(), book_list)
+        row = 0
+
+        if new:
+            ttk.Label(self.scrollable_frame, text="New", font=('Arial', 13, 'bold'), anchor='center').grid(
+                row=row, column=0, pady=(10, 5), sticky='ew'
+            )
+            row += 1
+
+            for novel in new:
+                ttk.Button(
+                    self.scrollable_frame,
+                    text=novel.title,
+                    command=lambda n=novel: self._add_book_image_and_details(n)
+                ).grid(row=row, column=0, pady=5, padx=5, sticky='ew')
+                row += 1
+
+            ttk.Separator(self.scrollable_frame, orient='horizontal').grid(
+                row=row, column=0, columnspan=1, sticky="ew", pady=(10, 10)
+            )
+            row += 1
+
+        if downloaded:
+            ttk.Label(self.scrollable_frame, text="Downloaded", font=('Arial', 13, 'bold'), anchor='center').grid(
+                row=row, column=0, pady=(10, 5), sticky='ew'
+            )
+            row += 1
+
+            for novel in downloaded:
+                ttk.Button(
+                    self.scrollable_frame,
+                    text=novel.title,
+                    command=lambda n=novel: self._add_book_image_and_details(n)
+                ).grid(row=row, column=0, pady=5, padx=5, sticky='ew')
+                row += 1
+
 
     def show_loader(self):
         loader_image = Image.open(constants.loader_image)
@@ -148,8 +181,13 @@ class NovelUI:
         frame.pack(pady=10, fill='both', expand=True, padx=20, side='left')
 
         self.canvas = tk.Canvas(frame)
+
         scrollbar = ttk.Scrollbar(frame, orient="vertical", command=self.canvas.yview)
         self.scrollable_frame = ttk.Frame(self.canvas)
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
 
         self.canvas.bind('<Configure>',
                          lambda e: self.canvas.itemconfig("window", width=e.width))
@@ -381,6 +419,7 @@ class NovelUI:
                 self.display_books(self.downloader.novels)
                 self.destroy_details_section()
             self.root.after(0, update_gui)
+
 
     def _add_book_image_and_details(self, novel):
         self.destroy_details_section()
