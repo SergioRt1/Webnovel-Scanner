@@ -27,8 +27,8 @@ class NovelBin(NormalWebsite):
         return image.download_with_screenshot(self.driver, novel_title, img_src) if img_src else None
 
     def get_loading_delay(self) -> float:
-        return 1.5
+        return 1.9
 
-    def get_chapter_list(self) -> [Chapter]:
+    def get_chapter_list(self) -> list[Chapter] | None:
         sleep(2.5)
         return super().get_chapter_list()

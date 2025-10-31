@@ -7,6 +7,7 @@ from logic.websites.lightnovelcave import LightNovelCave
 from logic.websites.novel_bin import NovelBin
 from logic.websites.novelcool import NovelCool
 from logic.websites.webnovel import WebNovel
+from logic.websites.novelhall import NovelHall
 from ui import NovelUI
 
 
@@ -22,6 +23,7 @@ def build_app(use_undetected, max_per_volume, is_chromium):
         Website.NovelBin: NovelBin(driver),
         Website.LightNovelCave: LightNovelCave(driver),
         Website.NovelCool: NovelCool(driver),
+        Website.NovelHall: NovelHall(driver),
     }
     scrapper = ScrapperSelenium(db, driver, websites, use_undetected)
     downloader = NovelDownloader(db, scrapper, max_per_volume)

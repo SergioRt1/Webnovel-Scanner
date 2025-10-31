@@ -37,9 +37,11 @@ class NovelUI:
     def __init__(self, downloader: NovelDownloader, content_filter: ContentFilter):
         self.downloader = downloader
         self.filter = content_filter
+        icon_path = os.path.join(os.path.dirname(__file__), "../icon.png")
 
         # Setup main window
         self.root = tk.Tk()
+        self.root.iconphoto(True, tk.PhotoImage(file=icon_path))
         self.root.title("Novel Downloader")
         self.root.geometry("1100x1080")
 

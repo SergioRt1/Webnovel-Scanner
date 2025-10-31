@@ -17,6 +17,7 @@ class Website(Enum):
     Webnovel = "https://www.webnovel.com"
     NovelCool = "https://www.novelcool.com"
     LightNovelCave = "https://www.lightnovelcave.com"
+    NovelHall = "https://www.novelhall.com"
 
 
 class BasicWebsite(ABC):
@@ -52,6 +53,10 @@ class BasicWebsite(ABC):
 
     @abstractmethod
     def _get_cover_img(self, novel_title):
+        pass
+
+    @abstractmethod
+    def _get_chapter_title(self, a):
         pass
 
     def get_loading_delay(self) -> float:

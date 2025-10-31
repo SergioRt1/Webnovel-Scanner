@@ -36,14 +36,16 @@ class NormalWebsite(BasicWebsite):
             return image_name
         return None
 
-    def get_table_content_element(self) -> WebElement:
+    def _get_chapter_title(self, a):
+        return a.get_attribute('title')
+
+    def get_table_content_element(self) -> WebElement | None:
         return selenium.get_element(
             self.driver,
             By.CSS_SELECTOR,
             self.selectors['get_table_content_clickable_element'],
         )
-
-    def get_chapter_list(self) -> [Chapter]:
+    def get_chapter_list(self) -> list[Chapter] | None:
         content = selenium.get_element(
             self.driver,
             By.CSS_SELECTOR,
@@ -51,7 +53,8 @@ class NormalWebsite(BasicWebsite):
         )
         if content:
             a_tags = content.find_elements(By.TAG_NAME, 'a')
-            return [Chapter(a.get_attribute('title'), a.get_attribute('href')) for a in a_tags]
+            return [Chapter(self._get_chapter_title(a), a.get_attribute('href')) for a in a_tags]
+        return None
 
     def get_chapter_content(self):
         chapter_content = selenium.get_element(
