@@ -13,7 +13,7 @@ def get_element(element_or_driver: webdriver.Chrome, by=By.ID, key: str = None) 
     return elements[0]
 
 
-def wait_and_click(driver, element):
+def wait_and_click(driver: webdriver.Chrome, element):
     driver.execute_script("arguments[0].scrollIntoView();", element)
     wait = WebDriverWait(driver, 10)
     wait.until(EC.element_to_be_clickable(element))

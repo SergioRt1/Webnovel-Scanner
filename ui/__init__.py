@@ -303,6 +303,22 @@ class NovelUI:
         ttk.Button(button_frame, text="Remove", command=self.remove_sentence).pack(side='right', padx=10)
         ttk.Button(button_frame, text="Stop Auto-Remove", command=self.stop_auto_remove).pack(side='left', padx=10)
 
+        # Add keyboard shortcut reminder
+        shortcut_text = (
+            "Keyboard Shortcuts:\n"
+            "CTRL+S → Save   |   "
+            "CTRL+D → Remove   |   "
+            "CTRL+E → Stop Auto-Remove   |   "
+            "CTRL+SPACE → Stop Auto-Remove"
+        )
+        self.shortcut_label = tk.Label(
+            self.review_window,
+            text=shortcut_text,
+            font=("Arial", 9),
+            fg="gray"
+        )
+        self.shortcut_label.pack(pady=5)
+
         # Bind key events
         self.review_window.bind('<Control-s>', lambda event: self.save_sentence())
         self.review_window.bind('<Control-d>', lambda event: self.remove_sentence())
@@ -469,5 +485,5 @@ class NovelUI:
 
     def close(self):
         print("============== CLOSING APPLICATION ==============")
-        self.downloader.scrapper.close()
+        self.downloader.scrapper.quit()
         self.root.destroy()

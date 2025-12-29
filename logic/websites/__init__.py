@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from enum import Enum
+from typing import TYPE_CHECKING
 
-from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 import utils.selenium as selen
 from logic.entities import Novel
 
+if TYPE_CHECKING:
+    from logic.selenium_web import ScrapperSelenium
 
 def get_website_ids() -> list[str]:
     return [website.value for website in Website]
@@ -19,14 +23,28 @@ class Website(Enum):
     LightNovelCave = "https://www.lightnovelcave.com"
     NovelHall = "https://www.novelhall.com"
 
+def register_websites(scrapper: ScrapperSelenium) -> None:
+    ## By calling the Constructor of a Website, the website will be self register in the scrapper
+    from .lightnovelcave import LightNovelCave
+    from .novel_bin import NovelBin
+    from .novelcool import NovelCool
+    from .novelhall import NovelHall
+    from .webnovel import WebNovel
+
+    LightNovelCave(scrapper)
+    NovelBin(scrapper)
+    NovelCool(scrapper)
+    NovelHall(scrapper)
+    WebNovel(scrapper)
 
 class BasicWebsite(ABC):
-    def __init__(self, driver: webdriver.Chrome, website_id: Website):
-        self.driver = driver
+    def __init__(self, scrapper: ScrapperSelenium, website_id: Website):
+        self.scrapper = scrapper
         self.id = website_id
+        self.scrapper.register_website(self.id, self)
 
     def _get_element_text(self, css_selector: str) -> str | None:
-        element = selen.get_element(self.driver, By.CSS_SELECTOR, css_selector)
+        element = selen.get_element(self.scrapper.driver, By.CSS_SELECTOR, css_selector)
         if element:
             text = element.text
             if not text:
@@ -36,7 +54,7 @@ class BasicWebsite(ABC):
         return None
 
     def _get_image_src(self, css_selector: str) -> str | None:
-        img = selen.get_element(self.driver, By.CSS_SELECTOR, css_selector)
+        img = selen.get_element(self.scrapper.driver, By.CSS_SELECTOR, css_selector)
         return img.get_attribute('src') if img else None
 
     @abstractmethod

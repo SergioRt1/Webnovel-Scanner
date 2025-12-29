@@ -1,16 +1,17 @@
 import requests
-from selenium import webdriver
+
 from selenium.webdriver.common.by import By
 from selenium.webdriver.remote.webelement import WebElement
 
 from logic.entities import Chapter
 from logic.websites import Website, BasicWebsite
 from utils import image, selenium
+from logic.selenium_web import ScrapperSelenium
 
 
 class NormalWebsite(BasicWebsite):
-    def __init__(self, driver: webdriver.Chrome, website: Website, selectors: dict = None):
-        super().__init__(driver, website)
+    def __init__(self, scrapper: ScrapperSelenium, website: Website, selectors: dict = None):
+        super().__init__(scrapper, website)
         self.selectors = selectors
 
     def _get_title(self):
@@ -41,13 +42,13 @@ class NormalWebsite(BasicWebsite):
 
     def get_table_content_element(self) -> WebElement | None:
         return selenium.get_element(
-            self.driver,
+            self.scrapper.driver,
             By.CSS_SELECTOR,
             self.selectors['get_table_content_clickable_element'],
         )
     def get_chapter_list(self) -> list[Chapter] | None:
         content = selenium.get_element(
-            self.driver,
+            self.scrapper.driver,
             By.CSS_SELECTOR,
             self.selectors['get_chapter_list'],
         )
@@ -58,7 +59,7 @@ class NormalWebsite(BasicWebsite):
 
     def get_chapter_content(self):
         chapter_content = selenium.get_element(
-            self.driver,
+            self.scrapper.driver,
             By.CSS_SELECTOR,
             self.selectors['get_chapter_content'],
         )

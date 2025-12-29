@@ -1,11 +1,10 @@
-from selenium import webdriver
-
 from logic.websites import Website
 from logic.websites.normal_website import NormalWebsite
+from logic.selenium_web import ScrapperSelenium
 
 
 class WebNovel(NormalWebsite):
-    def __init__(self, driver: webdriver.Chrome):
+    def __init__(self, scrapper: ScrapperSelenium):
         selectors = {
             '_get_title': 'body > div.page > div.det-hd.mb48 > div > div > div._mn.g_col._8.pr > h1',
             '_get_description': '#about > div.g_wrap.det-abt.mb48 > div.g_txt_over.mb48.fs16.j_synopsis._txtover > p',
@@ -15,4 +14,4 @@ class WebNovel(NormalWebsite):
             'get_chapter_list': '#contents > div > div.fs16.det-con-ol.oh.j_catalog_list',
             'get_chapter_content': '#page > div.cha-page-in > div.j_contentWrap > div > div.cha-content',
         }
-        super().__init__(driver, Website.Webnovel, selectors)
+        super().__init__(scrapper, Website.Webnovel, selectors)
