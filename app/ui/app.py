@@ -22,15 +22,16 @@ from app.ui.widgets import ScrollableFrame, StatusBar
 class NovelApp:
     def __init__(self, service: NovelService):
         self.service = service
-        self.root = tk.Tk()
+        self.root = tk.Tk(className="Noveldownloader")
         self.root.title(APP_NAME)
         self.root.geometry(APP_GEOMETRY)
         self.root.minsize(*APP_MIN_SIZE)
         if Path(ICON_PATH).exists():
             try:
-                self.root.iconphoto(True, tk.PhotoImage(file=ICON_PATH))
-            except Exception:
-                pass
+                self.icon_image = tk.PhotoImage(file=ICON_PATH)
+                self.root.iconphoto(True, self.icon_image)
+            except Exception as e:
+                print(f"Icon error: {e}")
 
         self.style = configure_theme(self.root)
         self.busy = False
