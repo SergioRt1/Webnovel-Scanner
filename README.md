@@ -69,7 +69,7 @@ The **Novel Scanner** app includes an optional ML-powered content filtering feat
 - Train custom models to refine the filtering accuracy based on the content you're scraping.
 
 ### Key Features:
-- **Train Model**: This option allows users to build training data and train a machine learning model to classify [novel-like](ml_data/novel-like.txt) vs. [non-novel](ml_data/non-novel.txt) content. 
+- **Train Model**: This option allows users to build training data and train a machine learning model to classify [novel-like](app/ml_data/novel-like.txt) vs. [non-novel](app/ml_data/non-novel.txt) content. 
 - **Prediction**: Once trained, the ML model can automatically filter out non-novel content from the scraped novels.
 - **Review Flagged Sentences**: Users can manually review flagged sentences to ensure only novel content remains.
 

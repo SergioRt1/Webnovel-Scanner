@@ -7,4 +7,5 @@ ml_data/training_data.csv
 *.pyc
 venv
 results
-saved_model
+app/saved_model
+data

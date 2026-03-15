@@ -8,3 +8,6 @@ Pillow==9.4.0
 tk==0.1.0
 requests~=2.31.0
 more-itertools==10.7.0
+
+pandas>=2.0.0
+datasketch>=1.6.5
