@@ -26,15 +26,9 @@ def safe_get_attribute(driver: WebDriver, selector: str, attribute: str, timeout
 
 def safe_find_all(driver: WebDriver, selector: str, timeout: int = 12) -> list[WebElement]:
     WebDriverWait(driver, timeout).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+        lambda d: len(d.find_elements(By.CSS_SELECTOR, selector)) > 0
     )
     return driver.find_elements(By.CSS_SELECTOR, selector)
-
-def safe_find(driver: WebDriver, selector: str, timeout: int = 12) -> WebElement:
-    WebDriverWait(driver, timeout).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, selector))
-    )
-    return driver.find_element(By.CSS_SELECTOR, selector)
 
 
 def wait_and_click(driver: WebDriver, element: WebElement, timeout: int = 8) -> None:
