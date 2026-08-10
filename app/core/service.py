@@ -5,6 +5,7 @@ from app.core.events import ProgressEvent
 from app.core.export import NovelExporter
 from app.filters.lsh_filter import ContentFilterLSH
 from app.ml.integration import MLProcessorAdapter
+from app.tts.integration import TTSProcessor, TTSConfig
 from app.models.entities import Novel
 from app.scraping.browser import SeleniumBrowser
 from app.storage.file_db import FileDB
@@ -49,6 +50,20 @@ class NovelService:
         outputs.append(self.exporter.export_single_txt(novel))
         outputs.append(self.exporter.export_metadata(novel))
         return outputs
+
+    def export_audio(self, novel: Novel, model_path: str, speed: float, split_by_chapter: bool, progress_callback, cancel_token: EventToken) -> list[str]:
+        cfg = TTSConfig(
+            model_path=model_path,
+            output_dir="Novels/audio",
+            speed=speed,
+            split_by_chapter=split_by_chapter,
+        )
+        processor = TTSProcessor(config=cfg)
+        return processor.export_novel_to_audio(
+            novel,
+            progress_callback=progress_callback,
+            cancel_token=cancel_token,
+        )
 
     def delete_novel(self, novel_title: str) -> bool:
         return self.db.delete_novel(novel_title)

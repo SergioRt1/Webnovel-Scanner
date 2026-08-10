@@ -27,7 +27,7 @@ class NovelExporter:
                     volume += 1
                     count = 0
 
-                current_file.write(f"{'=' * 72}\n{chapter.title}\n{'=' * 72}\n")
+                current_file.write(f"{'=' * 10}\n{chapter.title}\n{'=' * 10}\n")
                 current_file.write(chapter.content.strip() + "\n\n")
                 count += 1
         finally:
@@ -48,7 +48,7 @@ class NovelExporter:
             handle.write(f"Source: {novel.website}\n")
             handle.write(f"URL: {novel.url}\n\n")
             for chapter in chapters:
-                handle.write(f"{'=' * 72}\n{chapter.title}\n{'=' * 72}\n")
+                handle.write(f"{'=' * 10}\n{chapter.title}\n{'=' * 10}\n")
                 handle.write(chapter.content.strip() + "\n\n")
         return str(path)
 

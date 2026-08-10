@@ -121,8 +121,7 @@ class NovelApp:
         actions = ttk.Frame(right_card, style="Card.TFrame")
         actions.grid(row=3, column=1, sticky="ew")
         ttk.Button(actions, text="Download Missing Chapters", style="Accent.TButton", command=self.on_download).pack(side="left", padx=(0, 8))
-        ttk.Button(actions, text="Export", style="Secondary.TButton", command=self.on_export).pack(side="left", padx=(0, 8))
-        ttk.Button(actions, text="Export with ML", style="Secondary.TButton", command=self.on_export_with_ml).pack(side="left", padx=(0, 8))
+        ttk.Button(actions, text="Export Options", style="Secondary.TButton", command=self.open_export_menu).pack(side="left", padx=(0, 8))
         ttk.Button(actions, text="Delete", style="Danger.TButton", command=self.on_delete).pack(side="left")
 
     def _build_status_bar(self) -> None:
@@ -274,134 +273,12 @@ class NovelApp:
 
         self.run_in_thread(action, done_message="Download finished", task_name="download")
 
-    def on_export(self) -> None:
+    def open_export_menu(self) -> None:
         if not self.current_novel:
             messagebox.showinfo("Select a novel", "Choose a novel first.")
             return
-
-        def action(_cancel_token: CancelToken):
-            outputs = self.service.export_novel(self.current_novel)
-            self.root.after(0, lambda: messagebox.showinfo("Export complete", "\n".join(outputs)))
-
-        self.run_in_thread(action, done_message="Export complete", task_name="export")
-
-    def on_open_ml_tools(self) -> None:
-        if not self.current_novel:
-            messagebox.showinfo("Select a novel", "Choose a novel first.")
-            return
-        self._open_ml_window(self.current_novel)
-
-    def on_export_with_ml(self) -> None:
-        if not self.current_novel:
-            messagebox.showinfo("Select a novel", "Choose a novel first.")
-            return
-        self._open_ml_window(self.current_novel)
-
-    def _open_ml_window(self, novel: Novel) -> None:
-        available, error = self.service.ml_is_available()
-
-        self.ml_window = tk.Toplevel(self.root)
-        configure_theme(self.ml_window)
-        self.ml_window.title("ML Processor Options")
-        self.ml_window.geometry("460x320")
-        self.ml_window.configure(background=background_color())
-
-        self.filter_novel_var = tk.BooleanVar(value=True)
-
-        ttk.Label(self.ml_window, text="Optional ML cleanup flow for non-novel content.", font=("Segoe UI", 11, "bold")).pack(pady=(16, 8))
-        ttk.Checkbutton(self.ml_window, text="Filter duplicate chapters before ML", variable=self.filter_novel_var).pack(pady=6)
-        ttk.Button(self.ml_window, text="Open Non-Novel Content", style="Secondary.TButton", command=self.open_non_novel_content).pack(pady=6)
-        ttk.Button(self.ml_window, text="Open Novel-Like Content", style="Secondary.TButton", command=self.open_novel_like_content).pack(pady=6)
-
-        if available:
-            ttk.Button(self.ml_window, text="Train Model", style="Warning.TButton", command=lambda: self.train_model_and_continue(novel)).pack(pady=6)
-            ttk.Button(self.ml_window, text="Skip Training", style="Accent.TButton", command=lambda: self.show_prediction_view(novel)).pack(pady=6)
-        else:
-            ttk.Label(self.ml_window, text=error, foreground="red", wraplength=420, justify="left").pack(padx=12, pady=12)
-
-    def _apply_duplicate_filter_if_needed(self, novel: Novel) -> Novel:
-        if self.filter_novel_var.get():
-            return self.service.apply_duplicate_filter(novel)
-        return novel
-
-    def train_model_and_continue(self, novel: Novel) -> None:
-        novel = self._apply_duplicate_filter_if_needed(novel)
-
-        def action(cancel_token: CancelToken):
-            self.service.build_ml_training_data()
-            self.service.train_ml_model(cancel_token=cancel_token)
-            self.root.after(0, lambda: messagebox.showinfo("Training Complete", "The model has been trained successfully."))
-            self.root.after(0, lambda: self.show_prediction_view(novel))
-
-        self.run_in_thread(action, done_message="Model training complete", task_name="ml training")
-
-    def show_prediction_view(self, novel: Novel) -> None:
-        novel_dedup = self._apply_duplicate_filter_if_needed(novel)
-        self.root.after(0, self.ml_window.destroy)
-
-        self.prediction_window = tk.Toplevel(self.root)
-        self.prediction_window.title("Run ML Model")
-        self.prediction_window.geometry("800x220")
-        self.prediction_window.configure(background=background_color())
-
-        ttk.Label(self.prediction_window, text="Evaluate all chapters using the ML model", font=("Segoe UI", 12)).pack(pady=20)
-        self.prediction_label = ttk.Label(self.prediction_window, text="Ready", font=("Segoe UI", 11))
-        self.prediction_label.pack(pady=10)
-        ttk.Button(self.prediction_window, text="Run Model", style="Warning.TButton", command=lambda: self.run_model(novel_dedup)).pack(pady=6)
-        ttk.Button(self.prediction_window, text="Skip Model Evaluation", style="Secondary.TButton", command=lambda: self.skip_prediction(novel_dedup)).pack(pady=6)
-
-    def run_model(self, novel: Novel) -> None:
-        def action(cancel_token: CancelToken):
-            def progress(event: ProgressEvent):
-                self.root.after(0, lambda: self.prediction_label.config(text=f"Predicting: {event.message} ({event.current}/{event.total})"))
-                self._handle_progress(event)
-
-            predicted = self.service.run_ml_predictions(novel, progress_callback=progress, cancel_token=cancel_token)
-
-            def after_prediction():
-                self.prediction_window.destroy()
-                self.review_flagged_sentences(predicted)
-
-            self.root.after(0, after_prediction)
-
-        self.run_in_thread(action, done_message="ML prediction finished", task_name="ml prediction")
-
-    def review_flagged_sentences(self, novel: Novel) -> None:
-        controller = MLReviewController(self.root, novel, certainty_threshold=self.certainty_threshold, auto_remove_delay=self.auto_remove_delay)
-
-        def on_finish():
-            def action(cancel_token: CancelToken):
-                cleaned = self.service.finalize_ml_cleaning(novel, cancel_token=cancel_token)
-                outputs = self.service.export_novel(cleaned)
-                flagged_count = 0
-                for chapter in novel.chapter_list:
-                    if chapter.prediction_df is not None and not chapter.prediction_df.empty:
-                        flagged_count += int((chapter.prediction_df["Prediction"] == 1).sum())
-                if flagged_count > 0:
-                    message = "Filtered novel saved successfully.\n\n" + "\n".join(outputs)
-                else:
-                    message = "No non-novel content found. Novel saved successfully.\n\n" + "\n".join(outputs)
-                self.root.after(0, lambda: messagebox.showinfo("Process Complete", message))
-
-            self.run_in_thread(action, done_message="ML cleanup finished", task_name="ML cleanup")
-
-        controller.start(on_finish)
-        controller.wait()
-
-    def skip_prediction(self, novel: Novel) -> None:
-        self.prediction_window.destroy()
-
-        def action(_cancel_token: CancelToken):
-            outputs = self.service.export_novel(novel)
-            self.root.after(0, lambda: messagebox.showinfo("Process Complete", "Novel saved successfully.\n\n" + "\n".join(outputs)))
-
-        self.run_in_thread(action, done_message="Novel exported without ML cleanup", task_name="export")
-
-    def open_non_novel_content(self) -> None:
-        self.open_text_file("./ml_data/non-novel.txt")
-
-    def open_novel_like_content(self) -> None:
-        self.open_text_file("./ml_data/novel-like.txt")
+        from app.ui.export_view import ExportFlowController
+        ExportFlowController(self, self.current_novel)
 
     def open_text_file(self, file_path: str) -> None:
         if os.path.exists(file_path):

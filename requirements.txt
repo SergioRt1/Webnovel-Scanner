@@ -11,3 +11,7 @@ more-itertools==10.7.0
 
 pandas>=2.0.0
 datasketch>=1.6.5
+
+# TTS Dependencies
+sherpa-onnx>=1.10.0
+soundfile>=0.12.1

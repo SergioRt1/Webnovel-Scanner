@@ -1,14 +1,11 @@
 {
-    // Usar IntelliSense para aprender sobre posibles atributos.
-    // Mantener el mouse sobre los atributos existentes para ver descripciones.
-    // Para más información, visitar: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Python: Main",
+            "name": "Python: app.main (venv)",
             "type": "python",
             "request": "launch",
-            "program": "${workspaceFolder}/main.py",
+            "module": "app.main",
             "console": "integratedTerminal",
             "python": "${workspaceFolder}/venv/bin/python3.11",
             "cwd": "${workspaceFolder}"

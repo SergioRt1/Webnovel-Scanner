@@ -22,6 +22,10 @@ class Chapter:
     def is_downloaded(self) -> bool:
         return bool(self.content and self.content.strip())
 
+    @property
+    def safe_title(self) -> str:
+        return sanitize_filename(self.title)
+
 
 @dataclass
 class Novel:

@@ -46,14 +46,18 @@ class ContentFilterLSH:
         filtered: list[Chapter] = []
         seen_indices: set[int] = set()
 
-        for idx, chapter, mh in valid_items:
+        for idx, chapter in enumerate(novel.chapter_list):
+            if minhashes[idx] is None:
+                filtered.append(chapter)
+                continue
+
             if idx in seen_indices:
                 continue
 
-            is_duplicate = False
+            _, mh = minhashes[idx]
             for candidate in lsh.query(mh):
                 candidate_idx = int(candidate)
-                if candidate_idx == idx or candidate_idx in seen_indices:
+                if candidate_idx <= idx or candidate_idx in seen_indices:
                     continue
 
                 candidate_chapter = minhashes[candidate_idx][0]
@@ -65,10 +69,8 @@ class ContentFilterLSH:
 
                 if ratio >= threshold:
                     seen_indices.add(candidate_idx)
-                    is_duplicate = True
 
-            if not is_duplicate:
-                filtered.append(chapter)
+            filtered.append(chapter)
 
         novel.chapter_list = filtered
         novel.downloaded_set = {ch.title for ch in filtered if ch.is_downloaded}
